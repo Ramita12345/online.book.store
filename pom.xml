@@ -15,7 +15,7 @@
             <url>http://16.16.213.86:8081/repository/maven-releases/</url>
         </repository>
         <snapshotRepository>
-            <id>nexusCred</id>
+            <id>nexus_artifact1</id>
             <url>http://16.16.213.86:8081/repository/maven-snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
