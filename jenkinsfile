@@ -21,8 +21,10 @@ pipeline {
         stage("deploy") {
             steps {
                 echo "Deploying artifact to Nexus"
+                 withCredentials([usernamePassword(credentialsId: 'nexus_artifact1', usernameVariable: 'admin', passwordVariable: 'Nexus@1112')]) {
                 sh "mvn deploy -DskipTests=true -Dmaven.javadoc.skip=true"  // Maven deploy command
             }
         }
     }
+}
 }
