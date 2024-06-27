@@ -1,11 +1,6 @@
 pipeline {
     agent any
 
-    environment {
-        NEXUS_CREDENTIALS = credentials('nexus_artifact1')
-        MAVEN_HOME = tool name: 'localmaven', type: 'maven'
-    }
-
     stages {
         stage("git_checkout") {
             steps {
@@ -18,32 +13,29 @@ pipeline {
         stage("build") {
             steps {
                 echo "Building Maven project"
-                script {
-                    def mvnHome = tool 'localmaven'
-                    sh "${mvnHome}/bin/mvn clean package"
-                }
+                sh "mvn clean package"  // Maven build command
             }
         }
 
         stage("deploy") {
             steps {
                 echo "Deploying artifact to Nexus"
-                script {
-                    withCredentials([usernamePassword(credentialsId: 'nexus_artifact1', usernameVariable: 'admin', passwordVariable: 'Nexus@1112')]) {
-                        def mvnHome = tool 'localmaven'
-                        sh "${mvnHome}/bin/mvn deploy -DskipTests=true -Dmaven.javadoc.skip=true"
+                nexusArtifactUploader({
+                    nexusVersion('nexus3')
+                    protocol('http')
+                    nexusUrl('http://16.16.213.86:8081/') // URL to your Nexus repository
+                    groupId('com.Ramita12345')  // Replace with your groupId
+                    version('0.0.1-SNAPSHOT')   // Replace with your project version
+                    repository('nexus-releases') // Repository ID from distributionManagement
+                    credentialsId('nexus_artifact1') // Credentials ID for Nexus
+                    artifacts {
+                        artifact {
+                            file('path/to/your/artifact.war') // Path to your artifact
+                            type('war') // Artifact type
+                        }
                     }
-                }
+                })
             }
-        }
-    }
-
-    post {
-        success {
-            echo "Pipeline successfully completed!"
-        }
-        failure {
-            echo "Pipeline failed! Check the logs for details."
         }
     }
 }
