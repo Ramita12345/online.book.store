@@ -1,11 +1,15 @@
 pipeline {
     agent any
 
+    environment {
+        NEXUS_CREDENTIALS = credentials('nexus_artifact1')
+        MAVEN_HOME = tool name: 'localmaven', type: 'maven'
+    }
+
     stages {
         stage("git_checkout") {
             steps {
                 echo "Cloning repository"
-                // Add your git checkout step here
                 checkout scm
                 echo "Repository cloned successfully"
             }
@@ -14,17 +18,32 @@ pipeline {
         stage("build") {
             steps {
                 echo "Building Maven project"
-                sh "mvn clean package"  // Maven build command
+                script {
+                    def mvnHome = tool 'localmaven'
+                    sh "${mvnHome}/bin/mvn clean package"
+                }
             }
         }
 
         stage("deploy") {
             steps {
                 echo "Deploying artifact to Nexus"
-                 withCredentials([usernamePassword(credentialsId: 'nexus_artifact1', usernameVariable: 'admin', passwordVariable: 'Nexus@1112')]) {
-                sh "mvn deploy -DskipTests=true -Dmaven.javadoc.skip=true"  // Maven deploy command
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'nexus_artifact1', usernameVariable: 'admin', passwordVariable: 'Nexus@1112')]) {
+                        def mvnHome = tool 'localmaven'
+                        sh "${mvnHome}/bin/mvn deploy -DskipTests=true -Dmaven.javadoc.skip=true"
+                    }
+                }
             }
         }
     }
-}
+
+    post {
+        success {
+            echo "Pipeline successfully completed!"
+        }
+        failure {
+            echo "Pipeline failed! Check the logs for details."
+        }
+    }
 }
